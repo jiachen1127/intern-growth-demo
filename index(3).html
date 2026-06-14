@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>实习能量站｜业务部实习生成长导航智能看板</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --primary: #2563eb;
+      --primary-2: #dbeafe;
+      --green: #16a34a;
+      --orange: #f59e0b;
+      --red: #ef4444;
+      --purple: #7c3aed;
+      --shadow: 0 18px 45px rgba(31, 41, 55, .08);
+      --radius: 18px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--bg); color: var(--text); }
+    .app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+    aside { background: #0f172a; color: #e5e7eb; padding: 28px 22px; position: sticky; top: 0; height: 100vh; }
+    .brand { display: flex; gap: 12px; align-items: center; margin-bottom: 32px; }
+    .logo { width: 42px; height: 42px; border-radius: 14px; background: linear-gradient(135deg, #60a5fa, #a78bfa); display: grid; place-items: center; font-weight: 800; color: white; }
+    .brand h1 { font-size: 18px; line-height: 1.2; margin: 0; }
+    .brand small { color: #94a3b8; display: block; margin-top: 4px; }
+    nav button { width: 100%; border: 0; background: transparent; color: #cbd5e1; padding: 13px 14px; border-radius: 13px; text-align: left; cursor: pointer; font-size: 15px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    nav button:hover, nav button.active { background: rgba(255,255,255,.10); color: #fff; }
+    .aside-note { position: absolute; bottom: 28px; left: 22px; right: 22px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.10); border-radius: 16px; padding: 14px; color: #cbd5e1; font-size: 13px; line-height: 1.6; }
+    main { padding: 30px; }
+    .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 20px; margin-bottom: 22px; }
+    .topbar h2 { margin: 0 0 8px; font-size: 28px; }
+    .topbar p { margin: 0; color: var(--muted); }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .btn { border: 0; border-radius: 12px; background: var(--primary); color: white; padding: 11px 14px; cursor: pointer; font-weight: 650; box-shadow: 0 10px 20px rgba(37,99,235,.20); }
+    .btn.secondary { background: white; color: var(--text); border: 1px solid var(--line); box-shadow: none; }
+    .btn.ghost { background: #eef2ff; color: #3730a3; box-shadow: none; }
+    .grid { display: grid; gap: 18px; }
+    .kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .card { background: var(--card); border: 1px solid rgba(229,231,235,.95); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; }
+    .kpi .label { color: var(--muted); font-size: 13px; }
+    .kpi .value { font-size: 30px; font-weight: 800; margin: 6px 0; }
+    .kpi .hint { font-size: 12px; color: var(--muted); }
+    .two { grid-template-columns: minmax(0, 1.4fr) minmax(320px, .8fr); }
+    .three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .case-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .section-title { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 10px; }
+    .section-title h3 { margin: 0; font-size: 18px; }
+    .pill { display: inline-flex; align-items: center; padding: 5px 9px; border-radius: 99px; font-size: 12px; font-weight: 700; background: #f3f4f6; color: #374151; white-space: nowrap; }
+    .pill.green { background: #dcfce7; color: #166534; }
+    .pill.orange { background: #fef3c7; color: #92400e; }
+    .pill.red { background: #fee2e2; color: #991b1b; }
+    .pill.blue { background: #dbeafe; color: #1d4ed8; }
+    .pill.purple { background: #ede9fe; color: #5b21b6; }
+    .agent-badge { display: inline-flex; align-items: center; gap: 6px; padding: 7px 10px; border-radius: 999px; background: #f5f3ff; color: #5b21b6; border: 1px solid #ddd6fe; font-size: 12px; font-weight: 800; }
+    .agent-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom: 10px; }
+    .agent-title { display:flex; align-items:center; gap:8px; font-weight:800; }
+    .robot { width: 28px; height: 28px; display:grid; place-items:center; border-radius:10px; background:#ede9fe; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { text-align: left; padding: 12px 10px; border-bottom: 1px solid var(--line); font-size: 14px; }
+    th { color: #64748b; font-size: 12px; font-weight: 750; }
+    tr:hover td { background: #f8fafc; }
+    .progress { height: 9px; background: #e5e7eb; border-radius: 999px; overflow: hidden; width: 100%; }
+    .bar { height: 100%; border-radius: 999px; background: var(--primary); }
+    .bar.green { background: var(--green); }
+    .bar.orange { background: var(--orange); }
+    .bar.red { background: var(--red); }
+    .mentor-list, .timeline, .todo, .log { display: grid; gap: 10px; }
+    .item { border: 1px solid var(--line); border-radius: 14px; padding: 13px; background: #fff; }
+    .item strong { display: block; margin-bottom: 5px; }
+    .item span, .item p { color: var(--muted); font-size: 13px; margin: 0; line-height: 1.5; }
+    .view { display: none; }
+    .view.active { display: grid; }
+    .profile-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+    .select { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: white; min-width: 190px; }
+    .path { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-top: 16px; }
+    .step { border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: #fafafa; position: relative; }
+    .step.done { border-color: #bbf7d0; background: #f0fdf4; }
+    .step.current { border-color: #93c5fd; background: #eff6ff; }
+    .step h4 { margin: 0 0 8px; font-size: 14px; }
+    .step p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+    .step.current { box-shadow: 0 0 0 3px rgba(37,99,235,.10); animation: pulseStep 1.6s infinite; }
+    .step.current::after { content: "你现在在这里"; position: absolute; top: -10px; right: 12px; background: var(--primary); color: white; font-size: 11px; font-weight: 800; padding: 4px 8px; border-radius: 99px; }
+    @keyframes pulseStep { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+    .gap-card { margin-top: 12px; border: 1px dashed #bfdbfe; background: #eff6ff; border-radius: 14px; padding: 12px; color: #1e40af; font-size: 13px; line-height: 1.6; }
+    .controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+    .controls label { font-size: 12px; color: var(--muted); font-weight: 700; }
+    .range-value { font-size: 12px; color: var(--text); font-weight: 800; float: right; }
+    #mentorCommentInput { min-height: 64px; }
+    .api-note { margin-top: 10px; padding: 10px 12px; border-radius: 14px; background: #f8fafc; border: 1px dashed #cbd5e1; color: #475569; font-size: 12px; line-height: 1.6; }
+    textarea, input { width: 100%; border: 1px solid var(--line); border-radius: 13px; padding: 12px; font: inherit; background: #fff; }
+    textarea { min-height: 90px; resize: vertical; }
+    .ai-box { background: linear-gradient(135deg, #eff6ff, #f5f3ff); border: 1px solid #dbeafe; border-radius: 16px; padding: 15px; line-height: 1.65; font-size: 14px; white-space: pre-wrap; }
+    .case-card { border: 1px solid #dbeafe; background: linear-gradient(135deg, #ffffff, #f8fbff); border-radius: 16px; padding: 15px; }
+    .case-card h4 { margin: 0 0 8px; display:flex; justify-content:space-between; gap:8px; align-items:center; }
+    .case-card p { margin: 0; color: var(--muted); line-height:1.6; font-size: 13px; }
+    .risk { display: grid; grid-template-columns: 16px 1fr auto; gap: 10px; align-items: start; }
+    .dot { width: 10px; height: 10px; border-radius: 999px; margin-top: 5px; background: var(--green); }
+    .dot.orange { background: var(--orange); }
+    .dot.red { background: var(--red); }
+    .small { font-size: 12px; color: var(--muted); }
+
+    .think-dot { display:inline-flex; align-items:center; gap:6px; color:#5b21b6; font-size:12px; font-weight:800; margin-left:8px; }
+    .think-dot::before { content:""; width:8px; height:8px; border-radius:50%; background:#7c3aed; animation: breathe 1s infinite; }
+    @keyframes breathe { 0%,100% { opacity:.25; transform:scale(.85); } 50% { opacity:1; transform:scale(1.25); } }
+    .insight-card { border: 1px solid #ddd6fe; border-radius: 16px; padding: 14px; background: linear-gradient(135deg,#fff,#faf5ff); }
+    .script-box { background: linear-gradient(135deg,#fff7ed,#f5f3ff); border:1px solid #fed7aa; border-radius:16px; padding:15px; line-height:1.7; font-size:14px; white-space:pre-wrap; }
+    .badge-card { border:1px solid #bfdbfe; border-radius:18px; padding:18px; background: radial-gradient(circle at top left,#dbeafe,#fff 46%,#f5f3ff); box-shadow: var(--shadow); }
+    .badge-medal { width:56px; height:56px; border-radius:18px; display:grid; place-items:center; background:linear-gradient(135deg,#fbbf24,#f472b6); color:white; font-size:28px; margin-bottom:10px; }
+    .data-chip { display:inline-flex; padding:5px 9px; margin:3px 4px 0 0; border-radius:999px; background:#ecfeff; color:#155e75; font-size:12px; font-weight:700; border:1px solid #cffafe; }
+    .hidden { display: none !important; }
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+      aside { position: relative; height: auto; }
+      .aside-note { position: static; margin-top: 20px; }
+      .kpis, .two, .three, .path, .case-grid { grid-template-columns: 1fr; }
+      .topbar { flex-direction: column; }
+      .actions { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand">
+        <div class="logo">能</div>
+        <div><h1>实习能量站</h1><small>成长导航智能看板</small></div>
+      </div>
+      <nav>
+        <button class="active" data-view="dashboard">部门总览 <span>⌘</span></button>
+        <button data-view="mentor">导师带教台 <span>☑</span></button>
+        <button data-view="intern">实习生成长页 <span>↗</span></button>
+        <button data-view="hr">HR / 招聘协同 <span>◎</span></button>
+        <button data-view="config">规则与配置 <span>⚙</span></button>
+      </nav>
+      <div class="aside-note"><strong>V7 最新版</strong><br>内置双向反馈盲区校验、1v1 对话剧本杀、成长卡牌、动态追加任务与非侵入式数据采集方案。</div>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div>
+          <h2 id="pageTitle">部门总览</h2>
+          <p id="pageSub">实时查看 20 名实习生的学习进度、适岗趋势和带教风险。</p>
+        </div>
+        <div class="actions">
+          <button class="btn secondary" id="resetBtn">重置模拟数据</button>
+          <button class="btn ghost" id="exportBtn">导出汇总 JSON</button>
+          <button class="btn" id="refreshAiBtn">🤖 生成本周 AI 简报</button>
+        </div>
+      </div>
+
+      <section class="view active grid" id="dashboard">
+        <div class="grid kpis" id="kpiGrid"></div>
+        <div class="grid two">
+          <div class="card">
+            <div class="section-title"><h3>实习生适岗与进度</h3><span class="pill blue">20人</span></div>
+            <table>
+              <thead><tr><th>姓名</th><th>岗位</th><th>导师</th><th>阶段</th><th>进度</th><th>适岗</th><th>AI 标签</th></tr></thead>
+              <tbody id="internTable"></tbody>
+            </table>
+          </div>
+          <div class="card">
+            <div class="agent-head"><div class="agent-title"><span class="robot">🤖</span><h3 style="margin:0">AI 部门简报</h3></div><span class="agent-badge">由 AI 引擎实时生成</span></div>
+            <div class="ai-box" id="briefBox"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h3>AI 典型个案洞察</h3><span class="agent-badge">Agent 个性化编排</span></div>
+          <div class="grid case-grid" id="caseInsights"></div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h3>双向反馈盲区校验</h3><span class="agent-badge">导师评价 × 实习生匿名周报</span></div>
+          <div class="ai-box" id="blindSpotBox"></div>
+        </div>
+        <div class="grid three" id="roleCards"></div>
+      </section>
+
+      <section class="view grid" id="mentor">
+        <div class="grid two">
+          <div class="card">
+            <div class="section-title"><h3>导师标准带教清单</h3><span class="pill green">本周</span></div>
+            <div class="todo" id="mentorChecklist"></div>
+          </div>
+          <div class="card">
+            <div class="section-title"><h3>待关注实习生</h3><span class="pill orange">预警</span></div>
+            <div class="mentor-list" id="riskList"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h3>🤖 AI 带教建议生成器</h3><span class="agent-badge">由 Agent 调用岗位能力模型</span></div>
+          <select class="select" id="mentorSelect"></select>
+          <div class="controls">
+            <label>任务完成率 <span class="range-value" id="progressVal">--%</span><input type="range" id="progressInput" min="0" max="100" /></label>
+            <label>适岗评分 <span class="range-value" id="fitVal">--分</span><input type="range" id="fitInput" min="0" max="100" /></label>
+          </div>
+          <div style="height:10px"></div>
+          <textarea id="mentorCommentInput" placeholder="输入导师本周评语，例如：代码规范有待提升"></textarea>
+          <div style="height:12px"></div>
+          <button class="btn" id="updateScoreBtn">保存评分并触发 AI 重算</button>
+          <button class="btn secondary" id="mentorAiBtn" style="margin-left:8px">生成带教建议</button>
+          <button class="btn ghost" id="roleplayBtn" style="margin-left:8px">生成15分钟1v1对话剧本杀</button>
+          <button class="btn ghost" id="weeklyReportBtn" style="margin-left:8px">一键生成本周带教周报</button>
+          <div style="height:14px"></div>
+          <div class="ai-box" id="mentorAiBox">请选择实习生并点击生成。示例推荐：刘宇航（研发红色预警）或赵明轩（销售高潜池）。</div>
+          <div style="height:12px"></div>
+          <div class="script-box" id="roleplayBox">点击“生成15分钟1v1对话剧本杀”，AI 会生成导师可照着练的谈话逐字稿和实习生可能反应。</div>
+          <div style="height:12px"></div>
+          <div class="ai-box" id="weeklyReportBox">点击“一键生成本周带教周报”，可模拟导师把分散数据自动整理成可提交周报。</div>
+        </div>
+      </section>
+
+      <section class="view grid" id="intern">
+        <div class="card">
+          <div class="profile-head">
+            <div><h3>我的成长导航</h3><p class="small">清楚知道“现在学什么、下一步做什么、向谁求助”。</p></div>
+            <select class="select" id="internSelect"></select>
+          </div>
+          <div class="path" id="growthPath"></div>
+        </div>
+        <div class="grid two">
+          <div class="card">
+            <div class="section-title"><h3>本周学习任务</h3><button class="btn secondary" id="completeTaskBtn">完成第一项</button></div>
+            <div class="todo" id="taskList"></div>
+          </div>
+          <div class="card">
+            <div class="section-title"><h3>🤖 AI 成长问答</h3><span class="agent-badge">实时生成学习建议</span></div>
+            <textarea id="qaInput" placeholder="例如：我这周该重点补哪项能力？"></textarea>
+            <div style="height:10px"></div>
+            <button class="btn" id="qaBtn">提问</button>
+            <div style="height:14px"></div>
+            <div class="ai-box" id="qaBox">你可以询问学习重点、导师沟通、任务优先级等问题。</div>
+            <div class="api-note">演示版加入流式打字机效果；正式版可接入腾讯混元 API，并结合匿名周报做双向反馈盲区校验。</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="section-title"><h3>个性化成长卡牌</h3><span class="agent-badge">完成任务后自动生成技能勋章</span></div>
+          <div id="badgeBox"></div>
+        </div>
+      </section>
+
+      <section class="view grid" id="hr">
+        <div class="grid kpis" id="hrKpis"></div>
+        <div class="grid two">
+          <div class="card">
+            <div class="section-title"><h3>招聘适岗追踪</h3><span class="pill purple">可同步招聘</span></div>
+            <table><thead><tr><th>岗位</th><th>人数</th><th>平均适岗</th><th>高潜</th><th>需干预</th></tr></thead><tbody id="roleStats"></tbody></table>
+            <div style="height:12px"></div>
+            <button class="btn secondary" id="filterHighBtn">筛选高潜池</button>
+            <button class="btn ghost" id="exportTalentBtn">模拟导出名单</button>
+            <button class="btn" id="hrRiskBriefBtn" style="margin-left:8px">生成本周风险简报</button>
+            <div style="height:12px"></div>
+            <div class="todo" id="talentPool"></div>
+          </div>
+          <div class="card">
+            <div class="section-title"><h3>协同记录</h3><button class="btn secondary" id="addLogBtn">新增记录</button></div>
+            <div class="log" id="logList"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="agent-head"><div class="agent-title"><span class="robot">🤖</span><h3 style="margin:0">HR 本周风险简报</h3></div><span class="agent-badge">从数据到决策</span></div>
+          <div class="ai-box" id="hrRiskBriefBox">点击“生成本周风险简报”，系统会把红黄灯、高潜池和导师动作自动汇总成 HR 可转发版本。</div>
+        </div>
+      </section>
+
+      <section class="view grid" id="config">
+        <div class="grid two">
+          <div class="card">
+            <div class="section-title"><h3>AI 规则配置</h3><span class="pill blue">可编辑</span></div>
+            <div class="item"><strong>风险判定</strong><span>进度低于 50% 或适岗低于 65 分：红色预警；连续两周未更新：黄色预警；适岗高于 85 分进入高潜池。</span></div>
+            <div class="item"><strong>岗位能力模型差异</strong><span>研发侧重技术栈匹配度、代码交付与规范；产品侧重需求拆解、用户理解和文档质量；销售侧重客户模拟拜访、话术掌握与线索跟进。</span></div>
+            <div class="item"><strong>推荐逻辑</strong><span>Agent 按岗位能力模型 + 当前阶段 + 任务完成率 + 导师反馈，生成学习清单、导师动作和 HR 干预建议。</span></div>
+            <div class="item"><strong>大模型分工</strong><span>规则引擎判断阈值，LLM 负责把岗位上下文转化为个性化学习建议、导师 1v1 话术和 HR 介入理由。</span></div>
+            <div class="item"><strong>数据源</strong><span>正式版可连接飞书多维表格、企业微信/钉钉群记录、导师评价表、周报和招聘系统。</span></div>
+            <div class="item"><strong>非侵入式数据采集</strong><span>正式落地不要求导师每周手动填长表，而是由 Dify/Coze 插件监听飞书群关键字、Git/GitLab 提交频次、周报文本和任务系统状态，AI 先预估进度与适岗，导师只需 10 秒确认或微调。</span><br><span class="data-chip">飞书群卡点</span><span class="data-chip">Git提交频次</span><span class="data-chip">周报文本</span><span class="data-chip">任务系统状态</span></div>
+          </div>
+          <div class="card">
+            <div class="section-title"><h3>Prompt 模板</h3><span class="pill purple">可迁移到 Dify/Coze</span></div>
+            <div class="ai-box">你是一位资深 HRBP + 业务带教教练。
+输入：
+【实习生岗位】研发 / 产品 / 销售
+【当前阶段】第二阶段：进阶
+【本周任务完成率】45%（触发红色预警）
+【导师评语】代码规范有待提升
+【岗位能力模型】研发：技术栈匹配度、代码交付、代码规范、问题定位
+请输出：
+1. 下周核心补齐的 2 个具体知识点；
+2. 导师下周一 1v1 谈话要点；
+3. 是否需要 HR/招聘协同及原因。
+要求：建议必须具体、可执行、区分岗位差异，避免空泛鼓励。
+
+补充策略：当导师低分与实习生匿名周报冲突时，先触发“双向反馈盲区校验”，判断是能力短板还是带教卡点，再生成建议。
+
+腾讯混元 API 接入伪代码：
+POST /chat/completions
+messages = [{role:"system", content:上方Prompt}, {role:"user", content:实习生画像JSON}]</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const phases = ["入职熟悉", "能力补齐", "项目上手", "转正评估"];
+    const roleModels = {
+      "研发": "技术栈匹配度、代码交付、代码规范、问题定位",
+      "产品": "需求拆解、用户理解、文档质量、跨部门沟通",
+      "销售": "客户模拟拜访、标准话术、异议处理、线索跟进",
+      "运营": "数据看板、SOP执行、用户分层、活动复盘",
+      "市场": "案例拆解、内容选题、投放复盘、传播表达",
+      "数据": "SQL查询、指标理解、报表复现、异常解释"
+    };
+    const mentorComments = {
+      "李若溪": "接口联调理解较慢，需要补充单元测试练习",
+      "刘宇航": "代码规范有待提升，任务完成率偏低",
+      "孙浩然": "客户跟进节奏不稳定，模拟拜访不够熟练",
+      "赵明轩": "客户沟通积极，能主动复盘话术并跟进线索"
+    };
+    const baseInterns = [
+      ["陈一鸣","研发","周老师",1,72,78],["李若溪","研发","周老师",2,58,62],["王子涵","研发","赵老师",3,84,88],["刘宇航","研发","赵老师",2,45,60],["张可欣","产品","林老师",2,76,82],
+      ["黄嘉宁","产品","林老师",3,91,90],["吴思远","产品","孙老师",1,63,70],["徐曼琪","产品","孙老师",2,52,66],["赵明轩","销售","高老师",3,92,92],["钱雨桐","销售","高老师",2,67,74],
+      ["孙浩然","销售","郑老师",1,48,58],["周芷萱","销售","郑老师",2,73,80],["郑凯文","运营","马老师",3,86,84],["冯沐阳","运营","马老师",1,69,72],["陈思睿","运营","何老师",2,55,63],
+      ["韩若琳","市场","何老师",2,82,87],["杨天佑","市场","许老师",1,61,68],["朱安琪","市场","许老师",3,89,92],["秦泽宇","数据","唐老师",2,74,77],["沈书瑶","数据","唐老师",1,57,64]
+    ];
+    const taskBank = {
+      "研发": ["阅读团队代码规范并完成 1 个小修复", "参加需求评审并记录技术疑问", "完成单元测试入门练习"],
+      "产品": ["拆解 1 个竞品核心流程", "输出用户访谈问题清单", "完成需求文档初稿"],
+      "销售": ["学习标准话术并完成模拟拜访", "整理 10 条客户异议案例", "跟访 1 次客户沟通"],
+      "运营": ["复盘 1 个活动数据看板", "输出用户分层运营建议", "完成一次活动 SOP 检查"],
+      "市场": ["拆解 3 个行业传播案例", "完成一版内容选题表", "复盘投放素材效果"],
+      "数据": ["复现 1 张业务指标报表", "完成 SQL 查询练习", "解释 3 个异常数据波动"]
+    };
+    const selfFeedbackBank = {
+      "刘宇航": "匿名周报：我不是不想推进，主要是接口规范不清楚，导师连续 3 天没有回复关键问题，导致小修复卡住。",
+      "李若溪": "匿名周报：接口联调有点跟不上，希望导师能给一份测试样例和排错清单。",
+      "孙浩然": "匿名周报：客户模拟拜访时容易紧张，希望能先看一段优秀话术示范。",
+      "赵明轩": "匿名周报：本周跟进客户很有成就感，想挑战一次更真实的客户异议演练。"
+    };
+    function initialIntern(r,i){
+      const tasks = taskBank[r[1]].map((t,j)=>({title:t,done:j===0 && r[4]>70}));
+      return {id:i+1,name:r[0],role:r[1],mentor:r[2],phase:r[3],progress:r[4],fit:r[5],comment: mentorComments[r[0]] || "本周表现稳定，建议继续跟进阶段交付物", selfFeedback: selfFeedbackBank[r[0]] || "匿名周报：本周能跟上节奏，但希望知道下一阶段的验收标准。", tasks, updated: i%5===0 ? 12 : 3};
+    }
+    let state = JSON.parse(localStorage.getItem("energyStationStateV4") || "null") || {
+      interns: baseInterns.map(initialIntern),
+      logs: ["HR 提醒 3 位红色预警同学本周完成一次 1v1", "招聘同学已查看研发岗适岗分布", "导师周老师补充了李若溪的技术练习任务"]
+    };
+    function normalizeState(){
+      state.interns.forEach((x, idx)=>{
+        if(!x.selfFeedback) x.selfFeedback = selfFeedbackBank[x.name] || "匿名周报：本周能跟上节奏，但希望知道下一阶段的验收标准。";
+        if(!Array.isArray(x.tasks) || x.tasks.length===0) x.tasks = taskBank[x.role].map(t=>({title:t,done:false}));
+        x.progress = Math.max(0, Math.min(100, Number(x.progress)||0));
+      });
+      if(!state.logs) state.logs = [];
+    }
+    normalizeState();
+    function save(){ localStorage.setItem("energyStationStateV4", JSON.stringify(state)); }
+    function riskOf(x){ if(x.progress < 50 || x.fit < 65) return "red"; if(x.progress < 65 || x.updated > 7) return "orange"; return "green"; }
+    function avg(arr){ return Math.round(arr.reduce((a,b)=>a+b,0)/arr.length); }
+    function groupBy(arr,key){ return arr.reduce((m,x)=>{(m[x[key]]=m[x[key]]||[]).push(x);return m;},{}); }
+    function aiTag(x){ const r = riskOf(x); if(x.fit>=85) return ['高潜池','purple']; if(r==='red') return ['红色预警','red']; if(r==='orange') return ['需关注','orange']; return ['稳定推进','green']; }
+    function knowledgePoints(x){
+      if(x.role==='研发') return ['代码规范与提交检查清单', '单元测试与缺陷定位练习'];
+      if(x.role==='销售') return ['标准话术与异议处理', '客户线索跟进节奏'];
+      if(x.role==='产品') return ['需求拆解颗粒度', '用户场景与验收标准'];
+      if(x.role==='数据') return ['SQL 查询准确性', '业务指标口径理解'];
+      if(x.role==='运营') return ['活动 SOP 执行', '数据复盘框架'];
+      return ['岗位基础方法论', '阶段交付物复盘'];
+    }
+    function personalizedAdvice(x){
+      const r = riskOf(x), points = knowledgePoints(x);
+      if(x.name==='刘宇航') return `AI 判断：研发岗红色预警。任务完成率 ${x.progress}%，导师反馈“${x.comment}”。\n下周补齐：1）${points[0]}；2）${points[1]}。\n导师动作：下周一 1v1 对齐一个小修复任务，提供代码规范示例，周三检查一次提交质量。`;
+      if(x.name==='赵明轩') return `AI 判断：销售岗高潜池。适岗 ${x.fit} 分，已具备主动复盘能力。\n下周挑战：1）独立完成 1 次模拟拜访复盘；2）跟进 5 条线索并记录异议类型。\n招聘协同：可标记为重点转化对象，观察真实客户场景表现。`;
+      const action = r==='red' ? '先安排一次 15 分钟低压力 1v1，不急着批评，先确认任务是否讲清、资源是否到位，再把卡点拆成一个可验收小任务' : r==='orange' ? '周中增加一次轻量检查，优先帮TA厘清下一步，而不是等到周五才给总评' : '给TA一个稍有挑战但边界清晰的小项目，帮助从“完成任务”升级到“独立交付”';
+      return `AI 判断：${x.role}岗侧重“${roleModels[x.role]}”。\n建议补齐：1）${points[0]}；2）${points[1]}。\n导师动作：${action}。\n双向校验：请同步查看实习生匿名周报，避免把带教响应不足误判为个人能力不足。`;
+    }
+    function renderKpis(){
+      const risks = state.interns.map(riskOf);
+      const high = state.interns.filter(x=>x.fit>=85).length;
+      const red = risks.filter(x=>x==='red').length;
+      const doneRate = avg(state.interns.map(x=>x.progress));
+      const fitAvg = avg(state.interns.map(x=>x.fit));
+      document.getElementById('kpiGrid').innerHTML = [
+        ["整体进度", doneRate+"%", "较上周模拟提升 6%"], ["平均适岗", fitAvg+"分", "高潜实习生 "+high+" 人"], ["风险预警", red+"人", "需导师/HR 联合跟进"], ["任务完成率", avg(state.interns.map(x=>x.tasks.filter(t=>t.done).length/x.tasks.length*100))+"%", "来自本周学习任务"]
+      ].map(k=>`<div class="card kpi"><div class="label">${k[0]}</div><div class="value">${k[1]}</div><div class="hint">${k[2]}</div></div>`).join('');
+      document.getElementById('hrKpis').innerHTML = [
+        ["可转化人才池", high+"人", "适岗≥85"], ["招聘关注", red+"人", "适岗或进度偏低"], ["导师覆盖", new Set(state.interns.map(x=>x.mentor)).size+"位", "均已分配带教对象"], ["平均阶段", "第"+Math.round(avg(state.interns.map(x=>x.phase)))+"阶段", "覆盖入职到评估"]
+      ].map(k=>`<div class="card kpi"><div class="label">${k[0]}</div><div class="value">${k[1]}</div><div class="hint">${k[2]}</div></div>`).join('');
+    }
+    function renderTable(){
+      document.getElementById('internTable').innerHTML = state.interns.map(x=>{
+        const r = riskOf(x); const cls = r==='red'?'red':r==='orange'?'orange':'green'; const tag=aiTag(x);
+        return `<tr><td><strong>${x.name}</strong></td><td>${x.role}</td><td>${x.mentor}</td><td>${phases[x.phase-1]}</td><td><div class="progress"><div class="bar ${cls}" style="width:${x.progress}%"></div></div><span class="small">${x.progress}%</span></td><td>${x.fit}</td><td><span class="pill ${tag[1]}">🤖 ${tag[0]}</span></td></tr>`;
+      }).join('');
+    }
+    function brief(){
+      const risky = state.interns.filter(x=>riskOf(x)!=='green');
+      const best = [...state.interns].sort((a,b)=>b.fit-a.fit)[0];
+      const devRisk = state.interns.find(x=>x.name==='刘宇航');
+      const salesHigh = state.interns.find(x=>x.name==='赵明轩');
+      return `本周整体进度为 ${avg(state.interns.map(x=>x.progress))}%，平均适岗 ${avg(state.interns.map(x=>x.fit))} 分。Agent 已按岗位能力模型完成一次自动巡检。\n\n红色预警样本：${devRisk.name}（${devRisk.role}）进度 ${devRisk.progress}%，导师反馈“${devRisk.comment}”。AI 建议下周补齐代码规范与单元测试，并由导师在周一安排 1v1。\n\n高潜样本：${salesHigh.name}（${salesHigh.role}）适岗 ${salesHigh.fit} 分，进入高潜池。AI 建议安排模拟拜访进阶任务，并同步招聘作为重点转化线索。\n\n整体建议：${risky.length} 名同学需要关注，其中 ${state.interns.filter(x=>riskOf(x)==='red').length} 名为高风险；请导师优先拆分任务，HR 在 48 小时内跟进红色预警。`;
+    }
+    function renderBrief(){ document.getElementById('briefBox').textContent = brief(); }
+    function renderCaseInsights(){
+      const cases = ['刘宇航','赵明轩'].map(name=>state.interns.find(x=>x.name===name));
+      document.getElementById('caseInsights').innerHTML = cases.map(x=>{
+        const tag=aiTag(x);
+        return `<div class="case-card"><h4>${x.name}｜${x.role}<span class="pill ${tag[1]}">${tag[0]}</span></h4><p>${personalizedAdvice(x).replace(/\n/g,'<br>')}</p></div>`;
+      }).join('');
+    }
+    function renderRoleCards(){
+      const roles = groupBy(state.interns,'role');
+      document.getElementById('roleCards').innerHTML = Object.entries(roles).map(([role, list])=>{
+        const r = list.filter(x=>riskOf(x)!=='green').length;
+        return `<div class="card"><div class="section-title"><h3>${role}岗</h3><span class="pill ${r?'orange':'green'}">${r? r+'人关注':'稳定'}</span></div><p class="small">能力模型：${roleModels[role]}</p><p class="small">人数：${list.length}｜平均进度：${avg(list.map(x=>x.progress))}%｜平均适岗：${avg(list.map(x=>x.fit))}分</p><div class="progress"><div class="bar" style="width:${avg(list.map(x=>x.progress))}%"></div></div></div>`;
+      }).join('');
+    }
+    function actionOneLine(x){
+      const r = riskOf(x);
+      if(x.fit>=85) return `建议安排进阶挑战任务，并同步招聘作为重点转化对象。`;
+      if(r==='red') return `建议本周三前完成 15 分钟 1v1，确认卡点并拆成可验收小任务。`;
+      if(r==='orange') return `建议导师周中追加一次过程检查，明确下一阶段达标条件。`;
+      return `建议保持周一目标、周三检查、周五复盘节奏，并提升任务挑战度。`;
+    }
+    function blindSpotAnalysis(x){
+      const red = riskOf(x)==='red';
+      const fb = x.selfFeedback || "暂无实习生反向周报。";
+      const mentorSignals = `${x.comment}；进度${x.progress}%；适岗${x.fit}分`;
+      let verdict = "能力短板为主：导师评分与任务数据基本一致，建议继续按岗位能力模型补齐。";
+      if(red && /导师|未回|没有回复|没人|不清楚|卡住|需求不清/.test(fb)){
+        verdict = "存在带教盲区：低分不宜直接归因为实习生能力不足，需先核实导师响应、任务说明和验收标准是否清楚。";
+      } else if(red) {
+        verdict = "风险成立：导师评价、进度数据与实习生反馈未明显冲突，建议进入红色干预。";
+      }
+      return `对象：${x.name}｜${x.role}\n导师侧信号：${mentorSignals}\n实习生匿名周报：${fb}\nAI 校验结论：${verdict}`;
+    }
+    function renderBlindSpot(){
+      const x = state.interns.find(i=>i.name==="刘宇航") || state.interns.find(i=>riskOf(i)==='red') || state.interns[0];
+      document.getElementById('blindSpotBox').textContent = blindSpotAnalysis(x);
+    }
+    function dynamicTaskFromComment(x){
+      const c = `${x.comment} ${x.selfFeedback}`.toLowerCase();
+      if(/单元测试|测试/.test(c)) return "【追加任务】完成 1 个接口的单元测试案例编写";
+      if(/代码规范|规范|提交/.test(c)) return "【追加任务】对照代码规范完成 1 次提交自查清单";
+      if(/接口|联调/.test(c)) return "【追加任务】整理 3 个接口联调卡点并完成一次排错复盘";
+      if(/话术|拜访|客户/.test(c)) return "【追加任务】完成 1 次客户模拟拜访并记录 3 条异议处理";
+      if(/需求|文档|用户/.test(c)) return "【追加任务】补写 1 个需求场景和验收标准";
+      return "【追加任务】提交 1 份本周卡点复盘与下周行动计划";
+    }
+    function addDynamicTaskFromComment(x){
+      const title = dynamicTaskFromComment(x);
+      if(!x.tasks.some(t=>t.title===title)){
+        x.tasks.push({title, done:false, dynamic:true});
+        return title;
+      }
+      return "";
+    }
+    function roleplayScript(x){
+      const fb = x.selfFeedback || "暂无匿名周报";
+      return `【15分钟1v1对话剧本杀｜${x.name}】\n0-2分钟｜破冰：导师先说明“这次不是追责，是一起拆卡点”。\n导师台词：我看到你本周进度是 ${x.progress}%，也看到你反馈“${fb}”。我们先把问题拆开，判断是任务理解、资源支持，还是能力练习不足。\n\n3-7分钟｜还原事实：\n导师提问：这周最卡的一步是什么？你尝试过哪两种办法？\n实习生可能反应：我怕一直问显得自己能力不行，所以拖了几天。\n导师追问：以后卡住超过半天就发“三行求助”：目标、已尝试、需要的帮助。\n\n8-12分钟｜共创行动：\n导师台词：下周只盯一个小目标——${knowledgePoints(x)[0]}。我给你一个样例，你周三前交一版，我只看是否可验收。\n\n13-15分钟｜收口承诺：\n双方确认：周一目标、周三检查、周五复盘；若导师 24 小时未响应，自动同步 HR 做资源协调。`;
+    }
+    function skillBadge(x){
+      const done = x.tasks.filter(t=>t.done).length;
+      const total = x.tasks.length;
+      const point = knowledgePoints(x)[0];
+      const medal = x.fit>=85 ? "🏆" : done>=2 ? "🥇" : done>=1 ? "🌟" : "🧭";
+      const title = x.fit>=85 ? "高潜进阶勋章" : done>=2 ? "岗位上手勋章" : done>=1 ? "首个交付勋章" : "成长导航卡";
+      return `<div class="badge-card"><div class="badge-medal">${medal}</div><h3 style="margin:0 0 6px">${x.name} 的${title}</h3><p class="small">岗位：${x.role}｜已完成 ${done}/${total} 项任务｜当前阶段：${phases[x.phase-1]}</p><p style="line-height:1.7;margin:10px 0 0">AI 评语：你已经在“${point}”上形成了可观察的行动记录。下一步建议把学习成果沉淀成一个可复用样例，向导师申请一次阶段验收。</p></div>`;
+    }
+    function renderSkillBadge(){
+      const x = state.interns.find(i=>i.id==document.getElementById('internSelect').value) || state.interns[0];
+      const box = document.getElementById('badgeBox');
+      if(box) box.innerHTML = skillBadge(x);
+    }
+    function typeWriter(id, text, speed=18){
+      const el = document.getElementById(id);
+      el.textContent = "🤖 AI 正在深度思考中...";
+      let i = 0;
+      const timer = setInterval(()=>{
+        el.textContent = text.slice(0, i++);
+        if(i > text.length) clearInterval(timer);
+      }, speed);
+    }
+
+    function missingConditions(x){
+      const gaps = [];
+      if(x.progress < 70) gaps.push(`任务完成率还差 ${70-x.progress}% 才达到阶段验收线`);
+      if(x.fit < 75) gaps.push(`适岗评分还差 ${75-x.fit} 分，可通过导师复盘提升`);
+      if(x.tasks.some(t=>!t.done)) gaps.push(`仍有 ${x.tasks.filter(t=>!t.done).length} 项本周任务未完成`);
+      return gaps;
+    }
+    function mentorWeeklyReport(x){
+      const risks = riskOf(x)==='red' ? '红色预警' : riskOf(x)==='orange' ? '黄色关注' : '稳定推进';
+      return `【${x.name}｜${x.role}岗｜本周带教周报】\n1. 当前状态：${phases[x.phase-1]}阶段，任务完成率 ${x.progress}%，适岗评分 ${x.fit} 分，AI判定为“${risks}”。\n2. 本周观察：${x.comment}\n3. 下周重点：围绕“${knowledgePoints(x).join('、')}”补齐短板。\n4. 导师动作：${actionOneLine(x)}\n5. HR协同：${riskOf(x)==='red' ? '建议HR介入，跟进导师1v1是否完成。' : x.fit>=85 ? '建议同步招聘进入高潜池观察。' : '暂不需要HR额外介入，保持例行复盘。'}`;
+    }
+    function hrRiskBrief(){
+      const red = state.interns.filter(x=>riskOf(x)==='red');
+      const orange = state.interns.filter(x=>riskOf(x)==='orange');
+      const high = state.interns.filter(x=>x.fit>=85);
+      const firstRed = red[0];
+      return `【HR本周风险简报】\n本周共 ${state.interns.length} 名实习生，红色预警 ${red.length} 人，黄色关注 ${orange.length} 人，高潜池 ${high.length} 人。\n\n重点风险：${firstRed ? `${firstRed.name}（${firstRed.role}岗）进度 ${firstRed.progress}%、适岗 ${firstRed.fit} 分，建议48小时内确认导师1v1。` : '暂无红色预警。'}\n\n高潜建议：${high.slice(0,3).map(x=>`${x.name}（${x.role}）`).join('、') || '暂无'} 可同步招聘重点观察。\n\nHR动作：本周优先追踪红色预警人员的导师反馈闭环，周五汇总适岗变化给招聘同学。`;
+    }
+    function renderMentor(){
+      document.getElementById('mentorChecklist').innerHTML = [
+        ["周一目标对齐", "确认实习生本周学习目标、交付物和验收标准。"],
+        ["周三过程检查", "查看任务完成率，识别卡点并补充资料或示范。"],
+        ["周五反馈复盘", "填写适岗评价，给出下周一项明确提升建议。"],
+        ["风险升级", "红色预警需同步 HR，黄色预警需导师 1v1。"]
+      ].map(x=>`<div class="item"><strong>${x[0]}</strong><span>${x[1]}</span></div>`).join('');
+      document.getElementById('riskList').innerHTML = state.interns.filter(x=>riskOf(x)!=='green').map(x=>`<div class="item risk"><div class="dot ${riskOf(x)}"></div><div><strong>${x.name}｜${x.role}</strong><span>${personalizedAdvice(x).split('\n')[0]}；AI行动建议：${actionOneLine(x)}</span></div><span class="pill ${riskOf(x)}">${riskOf(x)==='red'?'高':'中'}</span></div>`).join('') || '<div class="item"><strong>暂无风险</strong><span>继续保持标准节奏。</span></div>';
+      const sel = document.getElementById('mentorSelect');
+      const currentValue = sel.value;
+      sel.innerHTML = state.interns.map(x=>`<option value="${x.id}">${x.name}｜${x.role}｜${x.mentor}</option>`).join('');
+      const defaultRisk = state.interns.find(x=>x.name==='刘宇航');
+      if(currentValue && state.interns.some(x=>String(x.id)===String(currentValue))) sel.value = currentValue;
+      else if(defaultRisk) sel.value = defaultRisk.id;
+      loadMentorForm();
+    }
+    function renderInternProfile(){
+      const sel = document.getElementById('internSelect');
+      if(!sel.innerHTML) sel.innerHTML = state.interns.map(x=>`<option value="${x.id}">${x.name}｜${x.role}</option>`).join('');
+      const intern = state.interns.find(x=>x.id == sel.value) || state.interns[0]; sel.value = intern.id;
+      document.getElementById('growthPath').innerHTML = phases.map((p,i)=>`<div class="step ${i+1<intern.phase?'done':i+1===intern.phase?'current':''}"><h4>${i+1}. ${p}</h4><p>${i+1<intern.phase?'已完成':i+1===intern.phase?'当前阶段：聚焦岗位能力和项目交付':'后续目标：完成阶段验收后解锁'}</p></div>`).join('') + `<div class="gap-card" style="grid-column:1/-1"><strong>距离下一阶段还差：</strong>${missingConditions(intern).length ? missingConditions(intern).join('；') : '已达到下一阶段标准，可申请导师验收'}。</div>`;
+      document.getElementById('taskList').innerHTML = intern.tasks.map((t,i)=>`<div class="item"><strong>${t.done?'✅':'⬜'} ${t.title}</strong><span>${t.done?'已完成，可沉淀复盘。':'建议本周完成，并向导师提交可验收结果。'}｜岗位能力：${roleModels[intern.role]}</span></div>`).join('');
+      renderSkillBadge();
+    }
+    let highFilterOn = false;
+    function renderHR(){
+      const roles = groupBy(state.interns,'role');
+      document.getElementById('roleStats').innerHTML = Object.entries(roles).map(([role, list])=>`<tr><td>${role}</td><td>${list.length}</td><td>${avg(list.map(x=>x.fit))}</td><td>${list.filter(x=>x.fit>=85).length}</td><td>${list.filter(x=>riskOf(x)!=='green').length}</td></tr>`).join('');
+      const pool = state.interns.filter(x=> highFilterOn ? x.fit>=85 : (x.fit>=85 || riskOf(x)!=='green'));
+      document.getElementById('talentPool').innerHTML = pool.map(x=>`<div class="item"><strong>${x.name}｜${x.role}｜适岗 ${x.fit} 分</strong><span>${x.fit>=85?'高潜池：建议同步招聘重点观察。':'风险池：建议 HR 跟进导师动作。'} AI建议：${actionOneLine(x)}</span></div>`).join('') || '<div class="item"><strong>暂无人员</strong><span>当前筛选条件下没有匹配对象。</span></div>';
+      document.getElementById('logList').innerHTML = state.logs.map((x,i)=>`<div class="item"><strong>${new Date().toLocaleDateString()} 协同记录 ${i+1}</strong><span>${x}</span></div>`).join('');
+    }
+    function loadMentorForm(){
+      const x = state.interns.find(i=>i.id==document.getElementById('mentorSelect').value) || state.interns[0];
+      document.getElementById('progressInput').value = x.progress;
+      document.getElementById('fitInput').value = x.fit;
+      document.getElementById('progressVal').textContent = x.progress + '%';
+      document.getElementById('fitVal').textContent = x.fit + '分';
+      document.getElementById('mentorCommentInput').value = x.comment;
+    }
+    function renderAll(){ renderKpis(); renderTable(); renderBrief(); renderCaseInsights(); renderBlindSpot(); renderRoleCards(); renderMentor(); renderInternProfile(); renderHR(); renderSkillBadge(); }
+    document.querySelectorAll('nav button').forEach(btn=>btn.addEventListener('click',()=>{
+      document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+      document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById(btn.dataset.view).classList.add('active');
+      const titles = {dashboard:['部门总览','实时查看 20 名实习生的学习进度、适岗趋势和带教风险。'], mentor:['导师带教台','把经验型带教转成标准动作，并获得 AI 个性化建议。'], intern:['实习生成长页','降低迷茫感，让每位同学知道当前目标和下一步任务。'], hr:['HR / 招聘协同','沉淀可同步招聘的适岗数据、风险记录和转化线索。'], config:['规则与配置','展示 AI 规则、数据源与 Prompt 模板，便于迭代。'] };
+      document.getElementById('pageTitle').textContent=titles[btn.dataset.view][0]; document.getElementById('pageSub').textContent=titles[btn.dataset.view][1];
+    }));
+    document.getElementById('refreshAiBtn').onclick = renderBrief;
+    document.getElementById('mentorAiBtn').onclick = ()=>{
+      const x = state.interns.find(i=>i.id==document.getElementById('mentorSelect').value);
+      const text = `${x.name} 当前处于“${phases[x.phase-1]}”阶段，进度 ${x.progress}%，适岗 ${x.fit} 分。\n\n岗位能力模型：${roleModels[x.role]}\n导师评语：${x.comment}\n匿名周报：${x.selfFeedback}\n\n${personalizedAdvice(x)}\n\n盲区校验：${blindSpotAnalysis(x).split('AI 校验结论：')[1] || '暂无异常'}\n\n输出来自本地规则型 Agent 模拟，正式版可替换为 Dify/Coze + 企业大模型。`;
+      typeWriter('mentorAiBox', text, 16);
+    };
+    document.getElementById('internSelect').onchange = renderInternProfile;
+    document.getElementById('completeTaskBtn').onclick = ()=>{
+      const x = state.interns.find(i=>i.id==document.getElementById('internSelect').value) || state.interns[0];
+      const t = x.tasks.find(t=>!t.done);
+      const btn = document.getElementById('completeTaskBtn');
+      if(t){
+        t.done=true;
+        x.progress=Math.round((x.tasks.filter(tk=>tk.done).length / x.tasks.length) * 100);
+        x.fit=Math.min(100,x.fit+5);
+        save(); renderAll();
+        btn.textContent = '✅ 已完成，成长卡已更新';
+        setTimeout(()=>{ btn.textContent = '完成第一项'; }, 1800);
+      } else {
+        btn.textContent = '🎉 本周任务已全部完成';
+        setTimeout(()=>{ btn.textContent = '完成第一项'; }, 1800);
+      }
+    };
+    document.getElementById('qaBtn').onclick = ()=>{
+      const x = state.interns.find(i=>i.id==document.getElementById('internSelect').value) || state.interns[0];
+      const q = document.getElementById('qaInput').value.trim();
+      const points = knowledgePoints(x);
+      const text = `${x.name}，结合你当前的 ${x.role} 岗和“${phases[x.phase-1]}”阶段，AI 建议本周优先做三件事：\n1. 补齐“${points[0]}”；\n2. 完成一个能被导师验收的小成果；\n3. 把不清楚的问题集中到一次沟通里，不要零散私聊。\n\n关于你的问题：“${q || '我这周该重点补哪项能力？'}”——建议先补齐岗位基础能力，再争取参与真实项目。\n\n个性化成长卡牌已根据你的任务完成情况同步刷新。`;
+      typeWriter('qaBox', text, 16);
+    };
+    document.getElementById('filterHighBtn').onclick = ()=>{ highFilterOn = !highFilterOn; document.getElementById('filterHighBtn').textContent = highFilterOn ? '显示风险+高潜' : '筛选高潜池'; renderHR(); };
+    document.getElementById('exportTalentBtn').onclick = ()=>{
+      const rows = [['姓名','岗位','导师','进度','适岗','AI建议'], ...state.interns.filter(x=>x.fit>=85).map(x=>[x.name,x.role,x.mentor,x.progress,x.fit,actionOneLine(x)])];
+      const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'high-potential-pool.csv'; a.click();
+    };
+    document.getElementById('addLogBtn').onclick = ()=>{ state.logs.unshift('新增：HR 已提醒对应导师更新本周评价，招聘同学将于周五查看适岗变化。'); save(); renderHR(); };
+    document.getElementById('resetBtn').onclick = ()=>{ localStorage.removeItem('energyStationStateV4'); location.reload(); };
+    document.getElementById('exportBtn').onclick = ()=>{
+      const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'intern-growth-summary.json'; a.click();
+    };
+    document.getElementById('mentorSelect').onchange = loadMentorForm;
+    document.getElementById('progressInput').oninput = e=>{ document.getElementById('progressVal').textContent = e.target.value + '%'; };
+    document.getElementById('fitInput').oninput = e=>{ document.getElementById('fitVal').textContent = e.target.value + '分'; };
+    document.getElementById('updateScoreBtn').onclick = ()=>{
+      const x = state.interns.find(i=>i.id==document.getElementById('mentorSelect').value);
+      x.progress = Number(document.getElementById('progressInput').value);
+      x.fit = Number(document.getElementById('fitInput').value);
+      x.comment = document.getElementById('mentorCommentInput').value.trim() || x.comment;
+      x.updated = 0;
+      const added = addDynamicTaskFromComment(x);
+      save();
+      renderAll();
+      const msg = `评分已保存，AI 已重新计算 ${x.name} 的风险标签和推荐动作。${added ? `\n\n已根据导师评语自动追加任务：${added}` : ''}\n\n${personalizedAdvice(x)}`;
+      typeWriter('mentorAiBox', msg, 14);
+    };
+    document.getElementById('weeklyReportBtn').onclick = ()=>{
+      const x = state.interns.find(i=>i.id==document.getElementById('mentorSelect').value);
+      typeWriter('weeklyReportBox', mentorWeeklyReport(x), 14);
+    };
+    document.getElementById('roleplayBtn').onclick = ()=>{
+      const x = state.interns.find(i=>i.id==document.getElementById('mentorSelect').value);
+      typeWriter('roleplayBox', roleplayScript(x), 12);
+    };
+    document.getElementById('hrRiskBriefBtn').onclick = ()=>{
+      typeWriter('hrRiskBriefBox', hrRiskBrief() + "\n\n数据采集建议：正式落地时接入飞书群、Git/GitLab、周报文本和任务系统，让 AI 先预估，导师只做一键确认。", 14);
+    };
+    renderAll();
+  </script>
+</body>
+</html>
